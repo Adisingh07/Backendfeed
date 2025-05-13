@@ -1,4 +1,4 @@
-import express from "express";
+import express, { Request, Response } from "express";
 import multer from "multer";
 import nodemailer from "nodemailer";
 import cors from "cors";
@@ -9,13 +9,20 @@ dotenv.config();
 const app = express();
 const port = process.env.PORT || 1456;
 
-// Enable CORS
+// Enable CORS and JSON parsing
 app.use(cors());
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
 
 // Configure multer for file uploads
 const upload = multer({ dest: "uploads/" });
 
-app.post("/api/feedback", upload.single("attachment"), async (req, res) => {
+// Extend Request to include Multer file
+interface MulterRequest extends Request {
+  file?: Express.Multer.File;
+}
+
+app.post("/api/feedback", upload.single("attachment"), async (req: MulterRequest, res: Response) => {
   const { name, email, rating, message } = req.body;
   const file = req.file;
 
@@ -24,23 +31,23 @@ app.post("/api/feedback", upload.single("attachment"), async (req, res) => {
       service: "gmail",
       auth: {
         user: process.env.MAIL_USER,
-        pass: process.env.MAIL_PASS
-      }
+        pass: process.env.MAIL_PASS,
+      },
     });
 
     const mailOptions: any = {
       from: `"Feedback Bot" <${process.env.MAIL_USER}>`,
       to: process.env.MAIL_TO,
       subject: "New Feedback Received",
-      text: `Name: ${name}\nEmail: ${email}\nRating: ${rating}\n\nMessage:\n${message}`
+      text: `Name: ${name}\nEmail: ${email}\nRating: ${rating}\n\nMessage:\n${message}`,
     };
 
     if (file) {
       mailOptions.attachments = [
         {
           filename: file.originalname,
-          path: file.path
-        }
+          path: file.path,
+        },
       ];
     }
 
