@@ -17,9 +17,19 @@ app.use(express.urlencoded({ extended: true }));
 // Configure multer for file uploads
 const upload = multer({ dest: "uploads/" });
 
-// Extend Request to include Multer file
+// Define MulterRequest without relying on Express.Multer
 interface MulterRequest extends Request {
-  file?: Express.Multer.File;
+  file?: {
+    fieldname: string;
+    originalname: string;
+    encoding: string;
+    mimetype: string;
+    size: number;
+    destination: string;
+    filename: string;
+    path: string;
+    buffer?: Buffer;
+  };
 }
 
 app.post("/api/feedback", upload.single("attachment"), async (req: MulterRequest, res: Response) => {
